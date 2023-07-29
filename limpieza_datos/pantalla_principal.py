@@ -4,13 +4,8 @@ from tkinter import messagebox # Libreria para mostrar message box
 from BaseDatos_sqlite import conn, C, es_dato_sensible
 import datetime
 
-import re
 import os # segunda libreria para llamar las imagenes sin utilizar ruta completa
-import registro_medico
-import datos_generales
-import datos_privados
-import compras
-import login
+
 
 
 # Función para verificar las credenciales
