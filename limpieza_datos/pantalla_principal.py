@@ -3,40 +3,57 @@ from PIL import ImageTk, Image # Libreria para mostrar imagenes
 from tkinter import messagebox # Libreria para mostrar message box
 from BaseDatos_sqlite import conn, C, es_dato_sensible
 import datetime
-
+import Clases.bd_conection as bc
 import os # segunda libreria para llamar las imagenes sin utilizar ruta completa
-
 import re
 from tkinter import messagebox
+import Clases.bd_conection as bd
 
-
+#
+#
+#
+#************ VENTANA LOGIN *********************************************************************************************************************************
+#
+#
+#
 def verificar_credenciales():
     usuario = entry_usuario.get()
     contrasena = entry_contrasena.get()
 
-    if usuario == "oscar" and contrasena == "12345":
-        # Destruir la ventana de inicio de sesión
-        ventana_login.destroy()
+    if usuario != "" and contrasena != "":
+        mysql = bd.MySQLConnector()
+        resultado_validacion = mysql.validate_login(usuario, contrasena)
 
-
-        # Ejemplo: Mostrar un mensaje de bienvenida en la consola
-        print(f"Bienvenido, {usuario}!")
-
+        if resultado_validacion == 1:
+            abrir_ventana_principal() #entramos a el sistema
+        elif resultado_validacion == 0:
+            messagebox.showwarning("Error", "Contraseña incorrecta.")
+        elif resultado_validacion == -1:
+            messagebox.showwarning("Error", "Usuario inexistente.")
     else:
-        messagebox.showwarning("Usuario/Contraseña inválido",
-                               "No puede iniciar sesión.")
-        # Mostrar un mensaje de error en la consola
-        print("Credenciales incorrectas")
-
+        messagebox.showwarning("Error", "¡Llene ambos campos antes de iniciar sesion!")
 
 def abrir_ventana_principal():
     # Código para mostrar la ventana principal existente
-    principal.mainloop()
+    ventana_login.destroy()
 
+#cerrar el login
+def cerrar_login():
+    exit()
+
+#
+#
+#
+#************ VENTANA PRINCIPAL *********************************************************************************************************************************
+#
+#
+#
 
 # Crear la ventana de inicio de sesión
 ventana_login = tk.Tk()
 ventana_login.title("Inicio de Sesión")
+ventana_login.protocol("WM_DELETE_WINDOW", cerrar_login)
+ventana_login.resizable(False, False)
 
 # Configurar tamaño fijo para la ventana
 ventana_login.geometry("500x450")
@@ -88,6 +105,9 @@ boton_iniciar_sesion.pack()
 
 # Ejecutar la ventana de inicio de sesión
 ventana_login.mainloop()
+
+
+
 
 # creación de la ventana del menú principal
 principal = tk.Tk()
