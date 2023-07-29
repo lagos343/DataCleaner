@@ -6,12 +6,6 @@ import datetime
 
 import os # segunda libreria para llamar las imagenes sin utilizar ruta completa
 
-
-
-# Función para verificar las credenciales
-import re
-from tkinter import messagebox
-
 import re
 from tkinter import messagebox
 
