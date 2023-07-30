@@ -9,6 +9,7 @@ import re
 from tkinter import messagebox
 import Clases.bd_conection as bd
 import Clases.validaciones_campos as valid
+import Clases.validar_campos_sensibles as sensible
 
 #
 #
@@ -152,7 +153,7 @@ compras_img = ImageTk.PhotoImage(imagen_compras)
 
 
 # Función para la pantalla de regristro medico
-def ventana_pantalla_principal():
+def ventana_pantalla_registro_medico():
     # Lógica para abrir la pantalla principal
     print("Abrir pantalla de registro médico")
     registro_medico_window = tk.Toplevel()
@@ -224,8 +225,11 @@ def ventana_pantalla_principal():
             # Insertar los datos en la tabla
             objetomysql = bd.MySQLConnector()
             objetomysql.insercion_registromedico(nombre_valor, int(edad_valor), sexo_valor, diagnostico_valor)
-
             messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+
+            # Limpiar los campos de entrada
+            for entry in entries.values():
+                entry.delete(0, tk.END)
         else:
             show_warning(vl.mensaje_error)
 
@@ -235,11 +239,17 @@ def ventana_pantalla_principal():
                                font=("Arial", 12), bg="#4C72B0", fg="white")
     guardar_button.pack(pady=10)
 
-
+#
+#
+#
+#************ VENTANA DATOS GENERALES *********************************************************************************************************************************
+#
+#
+#
 
 # Función para la pantalla de datos generales
 
-def pantalla_principal_datos():
+def pantalla_principal_datos_generales():
     datos_generales_window = tk.Toplevel()
     datos_generales_window.title("Datos Generales")
     datos_generales_window.geometry("500x600")
@@ -305,18 +315,12 @@ def pantalla_principal_datos():
         # Guardar la referencia a la variable de entrada en el diccionario entries
         entries[entry_variable] = entry
 
-        # Asignar la validación correspondiente al campo de entrada
-        validate_cmd = datos_generales_window.register(lambda text, validation_func=validation_func, warning_message=warning_message: validation_entry(text, validation_func, warning_message))
-        entry.config(validate="key", validatecommand=(validate_cmd, "%P"))
-
-    def validation_entry(text, validation_func, warning_message):
-        if not validation_func(text):
-            show_warning(warning_message)
-            return False  # Retorna False si no se cumple la validación
-        return True  # Retorna True si se cumple la validación
 
     # Función para guardar los datos de datos generales
     def guardar_datos_datos_generales():
+        #objeto de la clase de informacion sensible
+        s = sensible.VerificadorSensibilidad()
+
         # Obtener los valores de los campos de entrada
         nombre_valor = entries["nombre_entry"].get()
         apellido_valor = entries["apellido_entry"].get()
@@ -325,21 +329,22 @@ def pantalla_principal_datos():
         email_valor = entries["email_entry"].get()
         direccion_valor = entries["direccion_entry"].get()
 
-        # Insertar los datos en la tabla
-        # Insertar los datos en la tabla
-        objetomysql = bd.MySQLConnector()
-        objetomysql.insercion_datosgenerales(nombre_valor, apellido_valor, direccion_valor, int(edad_valor), telefono_valor, email_valor)
+        vl = valid.validacionesCampos()
 
-        messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+        if vl.validar_datos_generales(nombre_valor, apellido_valor, edad_valor, telefono_valor, email_valor, direccion_valor):
 
-        # Limpiar los campos de entrada
-        for entry in entries.values():
-            entry.delete(0, tk.END)
+            # Insertar los datos en la tabla
+            objetomysql = bd.MySQLConnector()
+            objetomysql.insercion_datosgenerales(nombre_valor, apellido_valor, direccion_valor, edad_valor, telefono_valor, email_valor)
 
-    def es_dato_sensible(dato):
-        # Aquí puedes implementar la lógica para determinar si el dato es sensible o no
-        # Por ejemplo, puedes tener una lista de palabras clave sensibles y verificar si alguna de ellas está presente en el dato
-        return "*"
+            messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+
+            # Limpiar los campos de entrada
+            for entry in entries.values():
+                entry.delete(0, tk.END)
+        else:
+            show_warning(vl.mensaje_error)
+
 
 
     # Asignar la función de guardar_datos_datos_generales al botón de guardar
@@ -638,11 +643,11 @@ marco_botones.pack(pady=120)
 
 
 # Botones para las diferentes pantallas
-registro_medico_button = tk.Button(marco_botones, image=registro_medico_img, command=ventana_pantalla_principal, **estilo_botones, compound=tk.TOP)
+registro_medico_button = tk.Button(marco_botones, image=registro_medico_img, command=ventana_pantalla_registro_medico, **estilo_botones, compound=tk.TOP)
 registro_medico_button.grid(row=0, column=0, padx=10, pady=10)
 registro_medico_button.config(text="Registro Médico")
 
-datos_generales_button = tk.Button(marco_botones, image=datos_generales_img, command=pantalla_principal_datos, **estilo_botones, compound=tk.TOP)
+datos_generales_button = tk.Button(marco_botones, image=datos_generales_img, command=pantalla_principal_datos_generales, **estilo_botones, compound=tk.TOP)
 datos_generales_button.grid(row=0, column=1, padx=10, pady=10)
 datos_generales_button.config(text="Datos Generales")
 

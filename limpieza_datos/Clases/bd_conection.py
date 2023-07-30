@@ -1,5 +1,5 @@
 import mysql.connector
-
+from tkinter import messagebox
 
 class MySQLConnector:
     def __init__(self):
@@ -20,6 +20,8 @@ class MySQLConnector:
             print("Connected to MySQL database")
         except mysql.connector.Error as err:
             print(f"Error: {err}")
+            messagebox.showwarning("Error de coneccion", str(err))
+
 
     def disconnect(self):
         if self.connection:
@@ -56,7 +58,7 @@ class MySQLConnector:
 
         self.disconnect()
 
-    def insercion_datosgenerales(self,nombre, apellido, direccion, edad, telefono, email):
+    def insercion_datosgenerales(self, nombre, apellido, direccion, edad, telefono, email):
         self.connect()
 
         cursor = self.connection.cursor()
