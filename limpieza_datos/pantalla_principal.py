@@ -235,7 +235,13 @@ def ventana_pantalla_principal():
                                font=("Arial", 12), bg="#4C72B0", fg="white")
     guardar_button.pack(pady=10)
 
-
+#
+#
+#
+#************ VENTANA DATOS GENERALES *********************************************************************************************************************************
+#
+#
+#
 
 # Función para la pantalla de datos generales
 
@@ -326,7 +332,6 @@ def pantalla_principal_datos():
         direccion_valor = entries["direccion_entry"].get()
 
         # Insertar los datos en la tabla
-        # Insertar los datos en la tabla
         objetomysql = bd.MySQLConnector()
         objetomysql.insercion_datosgenerales(nombre_valor, apellido_valor, direccion_valor, int(edad_valor), telefono_valor, email_valor)
 
@@ -347,6 +352,13 @@ def pantalla_principal_datos():
                                font=("Arial", 12), bg="#219ebc", fg="white")
     guardar_button.pack(pady=10)
 
+#
+#
+#
+#************ VENTANA DATOS PRIVADOS *********************************************************************************************************************************
+#
+#
+#
 
 # Función para la pantalla de datos privados
 def pantalla_principal_privados():
@@ -470,7 +482,13 @@ def pantalla_principal_privados():
                                font=("Arial", 12), bg="#ffafcc", fg="black")
     guardar_button.pack(pady=10)
 
-
+#
+#
+#
+#************ VENTANA COMPRAS *********************************************************************************************************************************
+#
+#
+#
 def pantalla_principal_compras():
     compras_window = tk.Toplevel()
     compras_window.title("Compras")
