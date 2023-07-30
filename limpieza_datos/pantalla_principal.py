@@ -263,56 +263,19 @@ def ventana_pantalla_principal():
         return "*"
 
     # Función para guardar los datos de registro médico
-    def guardar_datos_registro_medico1():
 
-        # Obtener los valores de los campos de entrada
-        id_valor = entries["id_entry"].get()
-        nombre_valor = entries["nombre_entry"].get()
-        edad_valor = entries["edad_entry"].get()
-        sexo_valor = entries["sexo_entry"].get()
-        diagnostico_valor = entries["diagnostico_entry"].get()
-
-
-        # Verificar si algún campo contiene datos sensibles
-        if es_dato_sensible(diagnostico_valor) :
-            # Insertar los datos sensibles en la tabla "datos_sensibles"
-            datos_sensibles = ( es_dato_sensible(diagnostico_valor))
-            C.execute("INSERT INTO datos_sensibles (diagnostico, telefono, email, tarjeta) VALUES (?, ?, ?, ?)",
-                      datos_sensibles)
-            conn.commit()
-
-        # Insertar los datos en la tabla
-        datos = (nombre_valor, edad_valor, sexo_valor, diagnostico_valor)
-        C.execute("INSERT INTO registro_medico (nombre, edad, sexo, diagnostico) VALUES (?, ?, ?, ?)", datos)
-        conn.commit()
-
-        messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
-
-
-        # Limpiar los campos de entrada
-        for entry in entries.values():
-            entry.delete(0, tk.END)
     def guardar_datos_registro_medico():
         # Obtener los valores de los campos de entrada
-        id_valor = entries["id_entry"].get()
+
         nombre_valor = entries["nombre_entry"].get()
         edad_valor = entries["edad_entry"].get()
         sexo_valor = entries["sexo_entry"].get()
         diagnostico_valor = entries["diagnostico_entry"].get()
 
         # Insertar los datos en la tabla
-        datos = (nombre_valor, edad_valor, sexo_valor, diagnostico_valor)
-        C.execute("INSERT INTO registro_medico (nombre, edad, sexo, diagnostico) VALUES (?, ?, ?, ?)", datos)
+        objetomysql=bd.MySQLConnector()
+        objetomysql.insercion_registromedico(nombre_valor, int(edad_valor), sexo_valor, diagnostico_valor)
 
-        # Insertar los datos en la tabla datos_sensibles
-        fecha_actual = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        datos_sensibles = (nombre_valor, es_dato_sensible(diagnostico_valor) )
-        print(datos_sensibles)
-        print(datos)
-        C.execute("INSERT INTO datos_sensibles (nombre, diagnostico) VALUES (?, ?)",
-                  datos_sensibles)
-
-        conn.commit()
 
         messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
 
@@ -566,21 +529,11 @@ def pantalla_principal_privados():
         telefono_valor = entries["telefono_entry"].get()
         email_valor = entries["email_entry"].get()
 
-        # Insertar los datos en la tabla
-        datos = (nombre_valor, apellido_valor, dni_valor, direccion_valor, telefono_valor, email_valor, )
-        C.execute(
-            "INSERT INTO datos_privados (nombre, apellido, dni, direccion, telefono, email) VALUES (?, ?, ?, ?, ?, ?)",
-            datos)
 
-        conn.commit()
-        datos_sensibles = (
-            nombre_valor, apellido_valor, es_dato_sensible(dni_valor),es_dato_sensible(telefono_valor),es_dato_sensible(email_valor)
-        )
-        print(datos_sensibles)
-        C.execute(
-            "INSERT INTO datos_sensibles (nombre, apellido, dni, telefono, email) VALUES (?, ?, ?, ?,?)",
-            datos_sensibles
-        )
+        # Insertar los datos en la tabla
+        objetomysql=bd.MySQLConnector()
+        objetomysql.insercion_datosprivados(nombre_valor, apellido_valor, f"{dni_valor}", direccion_valor, telefono_valor, email_valor)
+
 
         messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
 

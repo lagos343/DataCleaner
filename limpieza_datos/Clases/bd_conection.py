@@ -38,3 +38,25 @@ class MySQLConnector:
         return resultado_validacion
 
 
+    def insercion_registromedico(self,nombre,edad,sexo,diagnostico):
+        self.connect()
+
+        cursor = self.connection.cursor()
+        resultado = cursor.callproc('medico', (nombre, edad, sexo, diagnostico))
+        self.connection.commit()
+
+        self.disconnect()
+
+    def insercion_datosprivados(self,nombre, apellido, dni, direccion, telefono, email):
+        self.connect()
+
+        cursor = self.connection.cursor()
+        resultado = cursor.callproc('datosprivados', (nombre, apellido, dni, direccion, telefono, email))
+        self.connection.commit()
+
+        self.disconnect()
+
+
+
+
+
