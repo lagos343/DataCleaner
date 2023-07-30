@@ -417,40 +417,15 @@ def pantalla_principal_privados():
         # Guardar la referencia a la variable de entrada en el diccionario entries
         entries[entry_variable] = entry
 
-        # Asignar la validación correspondiente al campo de entrada
-        if validation_func is not None:
-            validate_cmd = datos_privados_window.register(lambda text, validation_func=validation_func, warning_message=warning_message: validation_entry(text, validation_func, warning_message))
-            entry.config(validate="key", validatecommand=(validate_cmd, "%P"))
 
-    def validation_entry(text, validation_func, warning_message):
-        if not validation_func(text):
-            show_warning(warning_message)
-            return False  # Retorna False si no se cumple la validación
-        return True  # Retorna True si se cumple la validación
+
+
 
     # Establecer un estilo para el botón
     boton_privados = {"font": ("Arial", 10), "bg": "#00a6fb", "fg": "Black", "width": 90}
 
-    def DNI(valor):
-        if valor.isdigit():
-            return True
-        else:
-            return False
 
-    def validar_dni_telefono(text):
-        if not text.isdigit():
-            show_warning("Solo se permiten números en este campo.")
-            return False
-        return True
 
-    # Asignar las validaciones
-    DNI_validation = datos_privados_window.register(validar_dni_telefono)
-    if "dni_entry" in entries:
-        entries["dni_entry"].config(validate="key", validatecommand=(DNI_validation, '%S'))
-
-    telefono_validation = datos_privados_window.register(validar_dni_telefono)
-    if "telefono_entry" in entries:
-        entries["telefono_entry"].config(validate="key", validatecommand=(telefono_validation, '%S'))
 
     # Función para guardar los datos
     def guardar_datos():
@@ -462,13 +437,16 @@ def pantalla_principal_privados():
         telefono_valor = entries["telefono_entry"].get()
         email_valor = entries["email_entry"].get()
 
+        vl = valid.validacionesCampos()
 
-        # Insertar los datos en la tabla
-        objetomysql=bd.MySQLConnector()
-        objetomysql.insercion_datosprivados(nombre_valor, apellido_valor, f"{dni_valor}", direccion_valor, telefono_valor, email_valor)
+        if vl.validar_registro_datos_privados(nombre_valor, apellido_valor, dni_valor, direccion_valor, telefono_valor, email_valor):
+            # Insertar los datos en la tabla
+            objetomysql=bd.MySQLConnector()
+            objetomysql.insercion_datosprivados(nombre_valor, apellido_valor, f"{dni_valor}", direccion_valor, telefono_valor, email_valor)
 
-
-        messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+            messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+        else:
+            show_warning(vl.mensaje_error)
 
         # Limpiar los campos de entrada
         for entry in entries.values():
@@ -557,41 +535,9 @@ def pantalla_principal_compras():
         # Guardar la referencia a la variable de entrada en el diccionario entries
         entries[entry_variable] = entry
 
-        # Asignar la validación correspondiente al campo de entrada
-        if validation_func is not None:
-            validate_cmd = compras_window.register(lambda text, validation_func=validation_func, warning_message=warning_message: validation_entry(text, validation_func, warning_message))
-            entry.config(validate="key", validatecommand=(validate_cmd, "%P"))
-
-    def validation_entry(text, validation_func, warning_message):
-        if not validation_func(text):
-            show_warning(warning_message)
-            return False  # Retorna False si no se cumple la validación
-        return True  # Retorna True si se cumple la validación
 
     # Establecer un estilo para el botón
     boton_compras = {"font": ("Arial", 10), "bg": "#cbf3f0", "fg": "Black", "width": 90}
-
-    def validar_telefono_privados(valor):
-        if valor.isdigit():
-            return True
-        else:
-            show_warning("Solo se permiten números en este campo.")
-            return False
-
-    def validar_tarjeta_credito(valor):
-        if valor.isdigit():
-            return True
-        else:
-            show_warning("Solo se permiten números en este campo.")
-            return False
-
-    tarjeta_validation = compras_window.register(validar_tarjeta_credito)
-    if "tarjeta_entry" in entries:
-        entries["tarjeta_entry"].config(validate="key", validatecommand=(tarjeta_validation, '%S'))
-
-    telefono_validation = compras_window.register(validar_telefono_privados)
-    if "telefono_entry" in entries:
-        entries["telefono_entry"].config(validate="key", validatecommand=(telefono_validation, '%S'))
 
     # Función para guardar los datos
     def guardar_datos():
@@ -604,11 +550,17 @@ def pantalla_principal_compras():
         email_valor = entries["email_entry"].get()
         tarjeta_valor = entries["tarjeta_entry"].get()
 
-        # Insertar los datos en la tabla
-        objetomysql = bd.MySQLConnector()
-        objetomysql.insercion_datoscompras(nombre_valor, apellido_valor, direccion_valor,ciudad_valor, telefono_valor, email_valor, tarjeta_valor)
+        vl = valid.validacionesCampos()
 
-        messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+        if vl.validar_registro_datos_compra(nombre_valor, apellido_valor, direccion_valor, ciudad_valor, telefono_valor, email_valor, tarjeta_valor):
+           # Insertar los datos en la tabla
+           objetomysql = bd.MySQLConnector()
+           objetomysql.insercion_datoscompras(nombre_valor, apellido_valor, direccion_valor, ciudad_valor, telefono_valor, email_valor, tarjeta_valor)
+
+           messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+
+        else:
+            show_warning(vl.mensaje_error)
 
         # Limpiar los campos de entrada
         for entry in entries.values():
