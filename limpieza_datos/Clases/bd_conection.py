@@ -56,6 +56,24 @@ class MySQLConnector:
 
         self.disconnect()
 
+    def insercion_datosgenerales(self,nombre, apellido, direccion, edad, telefono, email):
+        self.connect()
+
+        cursor = self.connection.cursor()
+        resultado = cursor.callproc('datos_generales', (nombre, apellido, direccion, edad, telefono, email))
+        self.connection.commit()
+
+        self.disconnect()
+
+    def insercion_datoscompras(self,nombre, apellido, direccion, ciudad, telefono, email, tajetacredito):
+        self.connect()
+
+        cursor = self.connection.cursor()
+        resultado = cursor.callproc('compras', (nombre, apellido, direccion, ciudad, telefono, email, tajetacredito))
+        self.connection.commit()
+
+        self.disconnect()
+
 
 
 

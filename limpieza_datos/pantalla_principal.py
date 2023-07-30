@@ -326,21 +326,9 @@ def pantalla_principal_datos():
         direccion_valor = entries["direccion_entry"].get()
 
         # Insertar los datos en la tabla
-        datos = (
-            nombre_valor, apellido_valor,edad_valor, telefono_valor, email_valor,direccion_valor )
-        C.execute(
-            "INSERT INTO datos_generales (nombre, apellido, edad, telefono, email, direccion) VALUES (?, ?, ?, ?, ?, ?)",
-            datos)
-        conn.commit()
-        datos_sensibles = (
-            nombre_valor, apellido_valor, es_dato_sensible(telefono_valor),
-            es_dato_sensible(email_valor)
-        )
-        print(datos_sensibles)
-        C.execute(
-            "INSERT INTO datos_sensibles (nombre, apellido, telefono, email) VALUES (?, ?, ?, ?)",
-            datos_sensibles
-        )
+        # Insertar los datos en la tabla
+        objetomysql = bd.MySQLConnector()
+        objetomysql.insercion_datosgenerales(nombre_valor, apellido_valor, direccion_valor, int(edad_valor), telefono_valor, email_valor)
 
         messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
 
@@ -617,18 +605,9 @@ def pantalla_principal_compras():
         tarjeta_valor = entries["tarjeta_entry"].get()
 
         # Insertar los datos en la tabla
-        datos = (
-        nombre_valor, apellido_valor, direccion_valor, telefono_valor, email_valor, tarjeta_valor)
-        C.execute(
-            "INSERT INTO compras (nombre, apellido, direccion, telefono, email, tarjeta) VALUES (?, ?, ?, ?, ?, ?)",
-            datos)
-        conn.commit()
-        datos_sensibles = (nombre_valor,apellido_valor, es_dato_sensible(telefono_valor), es_dato_sensible(email_valor) ,es_dato_sensible(tarjeta_valor) )
-        print(datos_sensibles)
-        C.execute(
-            "insert into datos_sensibles  (nombre, apellido, telefono, email, tarjeta) values (?,?,?,?,?)",
-            datos_sensibles
-        )
+        objetomysql = bd.MySQLConnector()
+        objetomysql.insercion_datoscompras(nombre_valor, apellido_valor, direccion_valor,ciudad_valor, telefono_valor, email_valor, tarjeta_valor)
+
         messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
 
         # Limpiar los campos de entrada
