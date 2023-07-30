@@ -8,6 +8,7 @@ import os # segunda libreria para llamar las imagenes sin utilizar ruta completa
 import re
 from tkinter import messagebox
 import Clases.bd_conection as bd
+import Clases.validaciones_campos as valid
 
 #
 #
@@ -107,8 +108,6 @@ boton_iniciar_sesion.pack()
 ventana_login.mainloop()
 
 
-
-
 # creación de la ventana del menú principal
 principal = tk.Tk()
 principal.title("Pantalla Principal")
@@ -141,6 +140,15 @@ datos_privados_img = ImageTk.PhotoImage(imagen_datos_privados)
 imagen_compras = Image.open("tarjeta.png")
 imagen_compras = imagen_compras.resize(tamaño_deseado)
 compras_img = ImageTk.PhotoImage(imagen_compras)
+
+
+#
+#
+#
+#************ VENTANA REGISTRO MEDICO *********************************************************************************************************************************
+#
+#
+#
 
 
 # Función para la pantalla de regristro medico
@@ -190,7 +198,7 @@ def ventana_pantalla_principal():
     entries = {}
 
     def show_warning(message):
-        messagebox.showwarning("Advertencia", message)
+        messagebox.showerror("Error", message)
         registro_medico_window.lift()  # Mantener la ventana de registro médico en primer plano
 
     for i, (texto, entry_variable, entry_type, validation_func, warning_message) in enumerate(campos):
@@ -198,72 +206,10 @@ def ventana_pantalla_principal():
         label.grid(row=i, column=0, padx=10, pady=10, sticky="e")
         entry = tk.Entry(main_frame, font=("Arial", 12))
         entry.grid(row=i, column=1, padx=10, pady=10)
-        # Guardar la referencia a la variable de entrada en el diccionario entries
+
         entries[entry_variable] = entry
 
-        # Asignar la validación correspondiente al campo de entrada
-        if validation_func is not None:
-            validate_cmd = registro_medico_window.register(lambda text, validation_func=validation_func, warning_message=warning_message: validation_entry(text, validation_func, warning_message))
-            entry.config(validate="key", validatecommand=(validate_cmd, "%P"))
-
-    def validation_entry(text, validation_func, warning_message):
-        if text.strip() == "":
-            return True  # Permite espacios en blanco sin mostrar el mensaje de advertencia
-        elif not validation_func(text):
-            show_warning(warning_message)
-            return False  # Retorna False si no se cumple la validación
-        return True  # Retorna True si se cumple la validación
-
-    # Funciones de validación
-
-    def validar_nombre(valor):
-        if re.search(r'^[a-zA-Z\s]+$', valor):
-            return True
-        else:
-            show_warning("Solo se permiten letras en este campo.")
-            return False
-
-    def validar_id(valor):
-        if valor.isdigit():
-            return True
-        else:
-            show_warning("Solo se permiten números en este campo.")
-            return False
-
-    def validar_edad(valor):
-        if valor.isdigit():
-            return True
-        else:
-            show_warning("Solo se permiten números en este campo.")
-            return False
-
-    def validar_sexo(valor):
-        if valor.isalpha():
-            return True
-        else:
-            show_warning("Solo se permiten letras en este campo.")
-            return False
-
-    # Asignar las funciones de validación a los campos de entrada
-    validacion_id = registro_medico_window.register(validar_id)
-    if "id_entry" in entries:
-        entries["id_entry"].config(validate="key", validatecommand=(validacion_id, '%S'))
-
-    validacion_edad = registro_medico_window.register(validar_edad)
-    if "edad_entry" in entries:
-        entries["edad_entry"].config(validate="key", validatecommand=(validacion_edad, '%S'))
-
-    validacion_sexo = registro_medico_window.register(validar_sexo)
-    if "sexo_entry" in entries:
-        entries["sexo_entry"].config(validate="key", validatecommand=(validacion_sexo, '%S'))
-
-    def es_dato_sensible(dato):
-        # Aquí puedes implementar la lógica para determinar si el dato es sensible o no
-        # Por ejemplo, puedes tener una lista de palabras clave sensibles y verificar si alguna de ellas está presente en el dato
-        return "*"
-
-    # Función para guardar los datos de registro médico
-
+   # Función para guardar los datos de registro médico
     def guardar_datos_registro_medico():
         # Obtener los valores de los campos de entrada
 
@@ -272,17 +218,16 @@ def ventana_pantalla_principal():
         sexo_valor = entries["sexo_entry"].get()
         diagnostico_valor = entries["diagnostico_entry"].get()
 
-        # Insertar los datos en la tabla
-        objetomysql=bd.MySQLConnector()
-        objetomysql.insercion_registromedico(nombre_valor, int(edad_valor), sexo_valor, diagnostico_valor)
+        vl = valid.validacionesCampos()
 
+        if vl.validar_registro_medico(nombre_valor, edad_valor, sexo_valor, diagnostico_valor):
+            # Insertar los datos en la tabla
+            objetomysql = bd.MySQLConnector()
+            objetomysql.insercion_registromedico(nombre_valor, int(edad_valor), sexo_valor, diagnostico_valor)
 
-        messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
-
-        # Limpiar los campos de entrada
-        for entry in entries.values():
-            entry.delete(0, tk.END)
-
+            messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+        else:
+            show_warning(vl.mensaje_error)
 
 
     # Asignar la función de guardar_datos_registro_medico al botón de guardar
