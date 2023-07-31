@@ -2,6 +2,12 @@ import re
 class validacionesCampos:
     #de haber errores estaran aca
     mensaje_error = "Lista de Errores:"
+
+    #
+    # ---------------------------------------------------------------------------------------------------------------------------------
+    # Validacion de registro medico
+    # ---------------------------------------------------------------------------------------------------------------------------------
+    #
     def validar_registro_medico(self, nombre, edad, sexo, diagnostico):
         esta_correcto = True
 
@@ -48,6 +54,72 @@ class validacionesCampos:
 
         return esta_correcto
 
+    #
+    # ---------------------------------------------------------------------------------------------------------------------------------
+    # Validacion de datos generales
+    # ---------------------------------------------------------------------------------------------------------------------------------
+    #
+    def validar_datos_generales(self, nombre, apellido, edad, telefono, email, direccion):
+        esta_correcto = True
+
+        # ------------------------------------------------------------------------------------------
+        # validaciones para nombre
+        if not self.solo_letras_y_espacios(nombre):
+            esta_correcto = False
+            self.mensaje_error += "\n-Nombre: solo letras o espacios son permitidos"
+
+        if not self.no_vacio(nombre):
+            esta_correcto = False
+            self.mensaje_error += "\n-Nombre: no puede estar vacio"
+
+        # ------------------------------------------------------------------------------------------
+        # validaciones para apellido
+        if not self.solo_letras_y_espacios(apellido):
+            esta_correcto = False
+            self.mensaje_error += "\n-Apellido: solo letras o espacios son permitidos"
+
+        if not self.no_vacio(nombre):
+            esta_correcto = False
+            self.mensaje_error += "\n-Apellido: no puede estar vacio"
+
+        # ------------------------------------------------------------------------------------------
+        # validaciones para edad
+        if not self.solo_digitos(edad):
+            esta_correcto = False
+            self.mensaje_error += "\n-Edad: solo numeros son permitidos"
+
+        if not self.no_vacio(edad):
+            esta_correcto = False
+            self.mensaje_error += "\n-Edad: no puede estar vacio"
+
+        # ------------------------------------------------------------------------------------------
+        # validaciones para telefono
+        if not self.solo_digitos(telefono):
+            esta_correcto = False
+            self.mensaje_error += "\n-Telefono: solo numeros son permitidos"
+
+        if not self.no_vacio(telefono):
+            esta_correcto = False
+            self.mensaje_error += "\n-Telefono: no puede estar vacio"
+
+        # ------------------------------------------------------------------------------------------
+        # validaciones para email
+        if not self.no_vacio(email):
+            esta_correcto = False
+            self.mensaje_error += "\n-Email: no puede estar vacio"
+
+        if not self.es_email_valido(email):
+            esta_correcto = False
+            self.mensaje_error += "\n-Email: ingrese un email valido"
+
+        # ------------------------------------------------------------------------------------------
+        # validaciones para direccion
+        if not self.no_vacio(direccion):
+            esta_correcto = False
+            self.mensaje_error += "\n-Direccion: no puede estar vacio"
+
+        return esta_correcto
+
     # VALIDACIONES DATOS PRIVADOS
     def validar_registro_datos_privados(self, nombre, apellido, dni, direccion,telefono,email):
         esta_correcto = True
@@ -85,9 +157,6 @@ class validacionesCampos:
 
         # ------------------------------------------------------------------------------------------
         # validaciones para direccion
-        if not self.solo_letras_y_espacios(direccion):
-            esta_correcto = False
-            self.mensaje_error += "\n-Direccion: solo letras o espacios son permitidos"
 
         if not self.no_vacio(direccion):
             esta_correcto = False
@@ -147,10 +216,6 @@ class validacionesCampos:
         # ------------------------------------------------------------------------------------------
 
         # validaciones para direccion
-        if not self.solo_letras_y_espacios(direccion):
-            esta_correcto = False
-            self.mensaje_error += "\n-Direccion: solo letras o espacios son permitidos"
-
         if not self.no_vacio(direccion):
             esta_correcto = False
             self.mensaje_error += "\n-Direccion: no puede estar vacio"

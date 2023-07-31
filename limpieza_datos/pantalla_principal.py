@@ -1,14 +1,11 @@
 import tkinter as tk # Libreria para crear las interfaces
 from PIL import ImageTk, Image # Libreria para mostrar imagenes
-from tkinter import messagebox # Libreria para mostrar message box
-from BaseDatos_sqlite import conn, C, es_dato_sensible
-import datetime
-import Clases.bd_conection as bc
 import os # segunda libreria para llamar las imagenes sin utilizar ruta completa
-import re
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 import Clases.bd_conection as bd
 import Clases.validaciones_campos as valid
+import Clases.validaciones_sensibles as sensitivy
+import pandas as pd
 
 #
 #
@@ -45,7 +42,7 @@ def cerrar_login():
 #
 #
 #
-#************ VENTANA PRINCIPAL *********************************************************************************************************************************
+#************ LOGIN *********************************************************************************************************************************
 #
 #
 #
@@ -107,11 +104,18 @@ boton_iniciar_sesion.pack()
 # Ejecutar la ventana de inicio de sesión
 ventana_login.mainloop()
 
+#
+#----------------------------------------------------------------------------------------------------------------------------------
+#VENTANA PRINCIPAL
+#----------------------------------------------------------------------------------------------------------------------------------
+#
 
 # creación de la ventana del menú principal
 principal = tk.Tk()
 principal.title("Pantalla Principal")
 principal.geometry("500x500")  # Ajuste del tamaño de la ventana
+principal.resizable(False, False)
+principal.protocol("WM_DELETE_WINDOW", lambda: cerrar_pantalla(principal))
 
 
 # Cambiar el fondo de la ventana principal
@@ -159,6 +163,7 @@ def ventana_pantalla_principal():
     registro_medico_window.title("Registro Médico")
     registro_medico_window.geometry("500x600")  # Ajusta el tamaño de la ventana
     registro_medico_window.resizable(False, False)  # Establecer tamaño fijo
+    registro_medico_window.protocol("WM_DELETE_WINDOW", lambda: cerrar_pantalla(registro_medico_window))
 
     # Cambiar el fondo de la ventana
     registro_medico_window.configure(bg="#caf0f8")
@@ -187,11 +192,10 @@ def ventana_pantalla_principal():
 
     # Crear los campos de entrada
     campos = [
-        ("ID:", "id_entry", str, lambda text: text.isdigit() or text == "", "Solo se permiten números en este campo."),
-        ("Nombre:", "nombre_entry", str, lambda text: re.match(r'^[A-Za-z\s]+$', text), "Solo se permiten letras en este campo."),
-        ("Edad:", "edad_entry", str, lambda text: text.isdigit() or text == "", "Solo se permiten números en este campo."),
-        ("Sexo:", "sexo_entry", str, lambda text: text.isalpha() or text == "", "Solo se permiten letras en este campo."),
-        ("Diagnóstico:", "diagnostico_entry", str, None, None),
+        ("Nombre:", "nombre_entry"),
+        ("Edad:", "edad_entry"),
+        ("Sexo:", "sexo_entry"),
+        ("Diagnóstico:", "diagnostico_entry"),
     ]
 
     # Diccionario para almacenar las referencias a los campos de entrada
@@ -201,7 +205,7 @@ def ventana_pantalla_principal():
         messagebox.showerror("Error", message)
         registro_medico_window.lift()  # Mantener la ventana de registro médico en primer plano
 
-    for i, (texto, entry_variable, entry_type, validation_func, warning_message) in enumerate(campos):
+    for i, (texto, entry_variable) in enumerate(campos):
         label = tk.Label(main_frame, text=texto, bg="#caf0f8", fg="black", font=("Arial", 12))
         label.grid(row=i, column=0, padx=10, pady=10, sticky="e")
         entry = tk.Entry(main_frame, font=("Arial", 12))
@@ -211,8 +215,10 @@ def ventana_pantalla_principal():
 
    # Función para guardar los datos de registro médico
     def guardar_datos_registro_medico():
-        # Obtener los valores de los campos de entrada
+        # Objeto de la clase de validacioens
+        s = sensitivy.VerificadorSensibilidad()
 
+        # Obtener los valores de los campos de entrada
         nombre_valor = entries["nombre_entry"].get()
         edad_valor = entries["edad_entry"].get()
         sexo_valor = entries["sexo_entry"].get()
@@ -223,17 +229,31 @@ def ventana_pantalla_principal():
         if vl.validar_registro_medico(nombre_valor, edad_valor, sexo_valor, diagnostico_valor):
             # Insertar los datos en la tabla
             objetomysql = bd.MySQLConnector()
-            objetomysql.insercion_registromedico(nombre_valor, int(edad_valor), sexo_valor, diagnostico_valor)
+            objetomysql.insercion_registromedico(s.es_sensible(nombre_valor),
+                                                 s.es_sensible(edad_valor),
+                                                 s.es_sensible(sexo_valor),
+                                                 s.es_sensible(diagnostico_valor))
+
+            # Limpiar los campos de entrada
+            for e in entries.values():
+                e.delete(0, tk.END)
 
             messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+            registro_medico_window.lift()
         else:
             show_warning(vl.mensaje_error)
 
 
     # Asignar la función de guardar_datos_registro_medico al botón de guardar
+
     guardar_button = tk.Button(registro_medico_window, text="Guardar", command=guardar_datos_registro_medico,
                                font=("Arial", 12), bg="#4C72B0", fg="white")
     guardar_button.pack(pady=10)
+
+    excel_button = tk.Button(registro_medico_window, text="Excel", command=lambda: generar_excel('medico', registro_medico_window),
+                               font=("Arial", 12), bg="#4C72B0", fg="white")
+    excel_button.pack(pady=10)
+
 
 #
 #
@@ -248,8 +268,9 @@ def ventana_pantalla_principal():
 def pantalla_principal_datos():
     datos_generales_window = tk.Toplevel()
     datos_generales_window.title("Datos Generales")
-    datos_generales_window.geometry("500x600")
+    datos_generales_window.geometry("500x650")
     datos_generales_window.resizable(False, False)  # Establecer tamaño fijo
+    datos_generales_window.protocol("WM_DELETE_WINDOW", lambda: cerrar_pantalla(datos_generales_window))
 
     # Cambiar el fondo de la ventana
     datos_generales_window.configure(bg="#003554")
@@ -288,12 +309,12 @@ def pantalla_principal_datos():
     campos_frame.pack(pady=10)
 
     campos = [
-        ("Nombre:", "nombre_entry", str, lambda text: re.match(r'^[A-Za-z\s]+$', text), "Solo se permiten letras en este campo."),
-        ("Apellido:", "apellido_entry", str, lambda text: re.match(r'^[A-Za-z\s]+$', text), "Solo se permiten letras en este campo."),
-        ("Edad:", "edad_entry", int, lambda text: text.isdigit() or text == "", "Solo se permiten números en este campo."),
-        ("Teléfono:", "telefono_entry", str, lambda text: text.isdigit() or text == "", "Solo se permiten números en este campo."),
-        ("Email:", "email_entry", str, lambda text: True, "Ingrese un email válido."),
-        ("Dirección:", "direccion_entry", str, lambda text: True, "Ingrese una dirección válida.")
+        ("Nombre:", "nombre_entry"),
+        ("Apellido:", "apellido_entry"),
+        ("Edad:", "edad_entry"),
+        ("Teléfono:", "telefono_entry"),
+        ("Email:", "email_entry"),
+        ("Dirección:", "direccion_entry")
     ]
 
     def show_warning(message):
@@ -302,7 +323,7 @@ def pantalla_principal_datos():
 
     entries = {}  # Diccionario para almacenar las referencias a los campos de entrada
 
-    for i, (texto, entry_variable, validation_type, validation_func, warning_message) in enumerate(campos):
+    for i, (texto, entry_variable) in enumerate(campos):
         label = tk.Label(campos_frame, text=texto, bg="#003554", fg="white",
                          font=("Arial", 12))
         label.grid(row=i, column=0, padx=10, pady=10, sticky="e")
@@ -311,18 +332,12 @@ def pantalla_principal_datos():
         # Guardar la referencia a la variable de entrada en el diccionario entries
         entries[entry_variable] = entry
 
-        # Asignar la validación correspondiente al campo de entrada
-        validate_cmd = datos_generales_window.register(lambda text, validation_func=validation_func, warning_message=warning_message: validation_entry(text, validation_func, warning_message))
-        entry.config(validate="key", validatecommand=(validate_cmd, "%P"))
-
-    def validation_entry(text, validation_func, warning_message):
-        if not validation_func(text):
-            show_warning(warning_message)
-            return False  # Retorna False si no se cumple la validación
-        return True  # Retorna True si se cumple la validación
 
     # Función para guardar los datos de datos generales
     def guardar_datos_datos_generales():
+        #Objeto de la clase de validacioens
+        s = sensitivy.VerificadorSensibilidad()
+
         # Obtener los valores de los campos de entrada
         nombre_valor = entries["nombre_entry"].get()
         apellido_valor = entries["apellido_entry"].get()
@@ -331,15 +346,27 @@ def pantalla_principal_datos():
         email_valor = entries["email_entry"].get()
         direccion_valor = entries["direccion_entry"].get()
 
-        # Insertar los datos en la tabla
-        objetomysql = bd.MySQLConnector()
-        objetomysql.insercion_datosgenerales(nombre_valor, apellido_valor, direccion_valor, int(edad_valor), telefono_valor, email_valor)
+        vl = valid.validacionesCampos()
 
-        messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+        if vl.validar_datos_generales(nombre_valor, apellido_valor, edad_valor, telefono_valor, email_valor, direccion_valor):
+            # Insertar los datos en la tabla
+            objetomysql = bd.MySQLConnector()
+            objetomysql.insercion_datosgenerales(s.es_sensible(nombre_valor),
+                                                 s.es_sensible(apellido_valor),
+                                                 s.es_sensible(direccion_valor),
+                                                 s.es_sensible(edad_valor),
+                                                 s.es_sensible(telefono_valor),
+                                                 s.es_sensible(email_valor))
 
-        # Limpiar los campos de entrada
-        for entry in entries.values():
-            entry.delete(0, tk.END)
+            messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+
+            # Limpiar los campos de entrada
+            for entry in entries.values():
+                entry.delete(0, tk.END)
+
+            datos_generales_window.lift()
+        else:
+            show_warning(vl.mensaje_error)
 
     def es_dato_sensible(dato):
         # Aquí puedes implementar la lógica para determinar si el dato es sensible o no
@@ -351,6 +378,11 @@ def pantalla_principal_datos():
     guardar_button = tk.Button(datos_generales_window, text="Guardar", command=guardar_datos_datos_generales,
                                font=("Arial", 12), bg="#219ebc", fg="white")
     guardar_button.pack(pady=10)
+
+    excel_button = tk.Button(datos_generales_window, text="Excel",
+                             command=lambda: generar_excel('datosgenerales', datos_generales_window),
+                             font=("Arial", 12), bg="#4C72B0", fg="white")
+    excel_button.pack(pady=10)
 
 #
 #
@@ -364,8 +396,9 @@ def pantalla_principal_datos():
 def pantalla_principal_privados():
     datos_privados_window = tk.Toplevel()
     datos_privados_window.title("Datos Privados")
-    datos_privados_window.geometry("500x600")  # Ajusta el tamaño de la ventana
+    datos_privados_window.geometry("500x650")  # Ajusta el tamaño de la ventana
     datos_privados_window.resizable(False, False)  # Establecer tamaño fijo
+    datos_privados_window.protocol("WM_DELETE_WINDOW", lambda: cerrar_pantalla(datos_privados_window))
 
     # Cambiar el fondo de la ventana
     datos_privados_window.configure(bg="#00a6fb")
@@ -405,12 +438,12 @@ def pantalla_principal_privados():
 
     # Crear los campos de entrada
     campos = [
-        ("Nombre:", "nombre_entry", str, lambda text: re.match(r'^[A-Za-z\s]+$', text), "Solo se permiten letras en este campo."),
-        ("Apellido:", "apellido_entry", str, lambda text: re.match(r'^[A-Za-z\s]+$', text), "Solo se permiten letras en este campo."),
-        ("DNI:", "dni_entry", str, lambda text: text.isdigit() or text == "", "Solo se permiten números en este campo."),
-        ("Dirección:", "direccion_entry", str, None, None),
-        ("Teléfono:", "telefono_entry", str, lambda text: text.isdigit() or text == "", "Solo se permiten números en este campo."),
-        ("Email:", "email_entry", str, None, None),
+        ("Nombre:", "nombre_entry"),
+        ("Apellido:", "apellido_entry"),
+        ("DNI:", "dni_entry"),
+        ("Dirección:", "direccion_entry"),
+        ("Teléfono:", "telefono_entry"),
+        ("Email:", "email_entry"),
     ]
 
     # Diccionario para almacenar las referencias a los campos de entrada
@@ -420,7 +453,7 @@ def pantalla_principal_privados():
         messagebox.showwarning("Advertencia", message)
         datos_privados_window.lift()  # Mantener la ventana de datos privados en primer plano
 
-    for i, (texto, entry_variable, entry_type, validation_func, warning_message) in enumerate(campos):
+    for i, (texto, entry_variable) in enumerate(campos):
         label = tk.Label(campos_frame, text=texto, bg="#00a6fb", fg="white",
                          font=("Arial", 12))
         label.grid(row=i, column=0, padx=10, pady=10, sticky="e")
@@ -429,18 +462,14 @@ def pantalla_principal_privados():
         # Guardar la referencia a la variable de entrada en el diccionario entries
         entries[entry_variable] = entry
 
-
-
-
-
     # Establecer un estilo para el botón
     boton_privados = {"font": ("Arial", 10), "bg": "#00a6fb", "fg": "Black", "width": 90}
 
-
-
-
     # Función para guardar los datos
     def guardar_datos():
+        # Objeto de la clase de validacioens
+        s = sensitivy.VerificadorSensibilidad()
+
         # Obtener los valores de los campos de entrada
         nombre_valor = entries["nombre_entry"].get()
         apellido_valor = entries["apellido_entry"].get()
@@ -454,33 +483,32 @@ def pantalla_principal_privados():
         if vl.validar_registro_datos_privados(nombre_valor, apellido_valor, dni_valor, direccion_valor, telefono_valor, email_valor):
             # Insertar los datos en la tabla
             objetomysql=bd.MySQLConnector()
-            objetomysql.insercion_datosprivados(nombre_valor, apellido_valor, f"{dni_valor}", direccion_valor, telefono_valor, email_valor)
+            objetomysql.insercion_datosprivados(s.es_sensible(nombre_valor),
+                                                s.es_sensible(apellido_valor),
+                                                s.es_sensible(f"{dni_valor}"),
+                                                s.es_sensible(direccion_valor),
+                                                s.es_sensible(telefono_valor),
+                                                s.es_sensible(email_valor))
+
+            # Limpiar los campos de entrada
+            for e in entries.values():
+                e.delete(0, tk.END)
 
             messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+            datos_privados_window.lift()
         else:
             show_warning(vl.mensaje_error)
 
-        # Limpiar los campos de entrada
-        for entry in entries.values():
-            entry.delete(0, tk.END)
-
-    def es_dato_sensible(dato):
-        # Aquí puedes implementar la lógica para determinar si el dato es sensible o no
-        # Por ejemplo, puedes tener una lista de palabras clave sensibles y verificar si alguna de ellas está presente en el dato
-        return "*"
-
-        # Limpiar los campos de entrada
-        entries["nombre_entry"].delete(0, tk.END)
-        entries["apellido_entry"].delete(0, tk.END)
-        entries["dni_entry"].delete(0, tk.END)
-        entries["direccion_entry"].delete(0, tk.END)
-        entries["telefono_entry"].delete(0, tk.END)
-        entries["email_entry"].delete(0, tk.END)
 
     # Asignar la función de guardar_datos al botón de guardar
     guardar_button = tk.Button(datos_privados_window, text="Guardar", command=guardar_datos,
                                font=("Arial", 12), bg="#ffafcc", fg="black")
     guardar_button.pack(pady=10)
+
+    excel_button = tk.Button(datos_privados_window, text="Excel",
+                             command=lambda: generar_excel('datosprivados', datos_privados_window),
+                             font=("Arial", 12), bg="#4C72B0", fg="white")
+    excel_button.pack(pady=10)
 
 #
 #
@@ -492,8 +520,9 @@ def pantalla_principal_privados():
 def pantalla_principal_compras():
     compras_window = tk.Toplevel()
     compras_window.title("Compras")
-    compras_window.geometry("500x600")  # Ajusta el tamaño de la ventana
+    compras_window.geometry("500x650")  # Ajusta el tamaño de la ventana
     compras_window.resizable(False, False)  # Establecer tamaño fijo
+    compras_window.protocol("WM_DELETE_WINDOW", lambda: cerrar_pantalla(compras_window))
 
     # Cambiar el fondo de la ventana
     compras_window.configure(bg="#006494")
@@ -528,13 +557,13 @@ def pantalla_principal_compras():
 
     # Crear los campos de entrada
     campos = [
-        ("Nombre:", "nombre_entry", str, lambda text: re.match(r'^[A-Za-z\s]+$', text), "Solo se permiten letras en este campo."),
-        ("Apellido:", "apellido_entry", str, lambda text: re.match(r'^[A-Za-z\s]+$', text), "Solo se permiten letras en este campo."),
-        ("Dirección:", "direccion_entry", str, None, None),
-        ("Ciudad:", "ciudad_entry", str, None, None),
-        ("Teléfono:", "telefono_entry", str, lambda text: text.isdigit() or text == "", "Solo se permiten números en este campo."),
-        ("Email:", "email_entry", str, None, None),
-        ("Tarjeta de Crédito:", "tarjeta_entry", str, lambda text: text.isdigit() or text == "", "Solo se permiten números en este campo."),
+        ("Nombre:", "nombre_entry"),
+        ("Apellido:", "apellido_entry"),
+        ("Dirección:", "direccion_entry"),
+        ("Ciudad:", "ciudad_entry"),
+        ("Teléfono:", "telefono_entry"),
+        ("Email:", "email_entry"),
+        ("Tarjeta de Crédito:", "tarjeta_entry"),
     ]
 
     # Diccionario para almacenar las referencias a los campos de entrada
@@ -544,7 +573,7 @@ def pantalla_principal_compras():
         messagebox.showwarning("Advertencia", message)
         compras_window.lift()  # Mantener la ventana de compras en primer plano
 
-    for i, (texto, entry_variable, entry_type, validation_func, warning_message) in enumerate(campos):
+    for i, (texto, entry_variable) in enumerate(campos):
         label = tk.Label(campos_frame, text=texto, bg="#006494", fg="white",
                          font=("Arial", 12))
         label.grid(row=i, column=0, padx=10, pady=10, sticky="e")
@@ -553,12 +582,14 @@ def pantalla_principal_compras():
         # Guardar la referencia a la variable de entrada en el diccionario entries
         entries[entry_variable] = entry
 
-
     # Establecer un estilo para el botón
     boton_compras = {"font": ("Arial", 10), "bg": "#cbf3f0", "fg": "Black", "width": 90}
 
     # Función para guardar los datos
     def guardar_datos():
+        # Objeto de la clase de validacioens
+        s = sensitivy.VerificadorSensibilidad()
+
         # Obtener los valores de los campos de entrada
         nombre_valor = entries["nombre_entry"].get()
         apellido_valor = entries["apellido_entry"].get()
@@ -573,28 +604,72 @@ def pantalla_principal_compras():
         if vl.validar_registro_datos_compra(nombre_valor, apellido_valor, direccion_valor, ciudad_valor, telefono_valor, email_valor, tarjeta_valor):
            # Insertar los datos en la tabla
            objetomysql = bd.MySQLConnector()
-           objetomysql.insercion_datoscompras(nombre_valor, apellido_valor, direccion_valor, ciudad_valor, telefono_valor, email_valor, tarjeta_valor)
+           objetomysql.insercion_datoscompras(s.es_sensible(nombre_valor),
+                                              s.es_sensible(apellido_valor),
+                                              s.es_sensible(direccion_valor),
+                                              s.es_sensible(ciudad_valor),
+                                              s.es_sensible(telefono_valor),
+                                              s.es_sensible(email_valor),
+                                              s.es_sensible(tarjeta_valor))
+
+           # Limpiar los campos de entrada
+           for entry in entries.values():
+               entry.delete(0, tk.END)
 
            messagebox.showinfo("Guardar", "Datos guardados exitosamente.")
+           compras_window.lift()
 
         else:
             show_warning(vl.mensaje_error)
-
-        # Limpiar los campos de entrada
-        for entry in entries.values():
-            entry.delete(0, tk.END)
-
-    def es_dato_sensible(dato):
-        # Aquí puedes implementar la lógica para determinar si el dato es sensible o no
-        # Por ejemplo, puedes tener una lista de palabras clave sensibles y verificar si alguna de ellas está presente en el dato
-        return "*"
-
 
     # Asignar la función de guardar_datos al botón de guardar
     guardar_button = tk.Button(compras_window, text="Guardar", command=guardar_datos, font=("Arial", 12),
                                    bg="#a2d2ff", fg="black")
     guardar_button.pack(pady=10)
 
+    excel_button = tk.Button(compras_window, text="Excel",
+                             command=lambda: generar_excel('compras', compras_window),
+                             font=("Arial", 12), bg="#4C72B0", fg="white")
+    excel_button.pack(pady=10)
+
+
+#--------------------------------------------------------------------
+#------------- funcion para cerrar las pantallas secundarias
+def cerrar_pantalla(pantalla):
+    resp = messagebox.askyesno("Advertencia", "¿Seguro que desea cerrar esta pantalla?, si lo hace cualquier progreso se perdera")
+
+    if resp:
+        pantalla.destroy()
+    else:
+        pantalla.lift()
+
+#--------------------------------------------------------------------
+#------------- funcion para generar los excels
+def generar_excel(tabla, pantalla):
+    c = bd.MySQLConnector()
+    nombres_columnas, registros = c.obtener_registros_por_tabla(tabla)
+
+    if registros:
+        # Crear un DataFrame de Pandas con los registros
+        df = pd.DataFrame(registros, columns=nombres_columnas)
+
+        # Pedir al usuario la ubicación y el nombre del archivo Excel
+        nombre_archivo_excel = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel Files", "*.xlsx")])
+
+        # Verificar si el usuario canceló la selección
+        if not nombre_archivo_excel:
+            messagebox.showerror("Error al guardar", "No se seleciono una ruta valida de guardado")
+        else:
+            # Guardar el DataFrame en el archivo Excel seleccionado con los nombres de las columnas
+            try:
+                df.to_excel(nombre_archivo_excel, index=False)
+                messagebox.showinfo("Exito al guardar", f"Los registros se han guardado exitosamente en '{nombre_archivo_excel}'.")
+            except Exception as e:
+                messagebox.showerror("Error al guardar", f"Error al guardar en Excel: {e}")
+    else:
+        messagebox.showerror("No se encontraron registros en la tabla.")
+
+    pantalla.lift()
 
 #stop
 
@@ -631,6 +706,3 @@ principal.grid_columnconfigure(0, weight=1)
 
 # Ejecutar la ventana principal
 principal.mainloop()
-
-# cerrar la base de datos
-conn.close()

@@ -26,6 +26,26 @@ class MySQLConnector:
             self.connection.close()
             print("Disconnected from MySQL database")
 
+    def obtener_registros_por_tabla(self, tabla):
+        self.connect()
+
+        cursor = self.connection.cursor()
+        cursor.callproc('obtener_registros', [tabla])
+
+        # Obtener los resultados del procedimiento almacenado
+        registros = []
+        for result in cursor.stored_results():
+            registros.extend(result.fetchall())
+
+        cursor.callproc('obtener_columnas', [tabla])
+
+        result = cursor.stored_results()
+        column_names_result = next(result).fetchone()[0]
+        column_names_list = column_names_result.split(',')
+
+        self.disconnect
+        return column_names_list, registros
+
     def validate_login(self, user, password):
         self.connect()  # Abrimos la conexión
 
